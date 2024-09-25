@@ -1,0 +1,14 @@
+/frontend
+    /css
+        styles.css
+    /js
+        auth.js
+        tasks.js
+        profile.js
+    /pages
+        index.html
+        signup.html
+        login.html
+        dashboard.html
+        profile.html
+    package.json

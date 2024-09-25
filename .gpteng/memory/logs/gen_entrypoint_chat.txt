@@ -1,0 +1,452 @@
+
+2024-09-22T23:44:30.716609
+================================ System Message ================================
+
+You will get information about a codebase that is currently on disk in the current folder.
+The user will ask you to write a script that runs the code in a specific way.
+You will answer with code blocks that include all the necessary terminal commands.
+Do not install globally. Do not use sudo.
+Do not explain the code, just give the commands.
+Do not use placeholders, use example values (like . for a folder argument) if necessary.
+
+
+================================ Human Message =================================
+
+
+        Make a unix script that
+        a) installs dependencies
+        b) runs all necessary parts of the codebase (in parallel if necessary)
+        
+Information about the codebase:
+
+```
+File: Structure
+1 /frontend
+2     /css
+3         styles.css
+4     /js
+5         auth.js
+6         tasks.js
+7         profile.js
+8     /pages
+9         index.html
+10         signup.html
+11         login.html
+12         dashboard.html
+13         profile.html
+14     package.json
+
+File: package.json
+1 {
+2   "name": "todo-list-frontend",
+3   "version": "1.0.0",
+4   "description": "Frontend for To-Do List application",
+5   "main": "index.js",
+6   "scripts": {
+7     "start": "live-server --port=8080"
+8   },
+9   "dependencies": {
+10     "live-server": "^1.2.1"
+11   },
+12   "author": "",
+13   "license": "ISC"
+14 }
+
+File: css/styles.css
+1 body {
+2     font-family: Arial, sans-serif;
+3     background-color: #f8f9fa;
+4     margin: 0;
+5     padding: 0;
+6 }
+7 
+8 .container {
+9     max-width: 800px;
+10     margin: 0 auto;
+11     padding: 20px;
+12 }
+13 
+14 header {
+15     background-color: #007bff;
+16     color: white;
+17     padding: 10px 0;
+18     text-align: center;
+19 }
+20 
+21 form {
+22     margin-bottom: 20px;
+23 }
+24 
+25 input, select, button {
+26     display: block;
+27     width: 100%;
+28     padding: 10px;
+29     margin-bottom: 10px;
+30 }
+31 
+32 button {
+33     background-color: #007bff;
+34     color: white;
+35     border: none;
+36     cursor: pointer;
+37 }
+38 
+39 button:hover {
+40     background-color: #0056b3;
+41 }
+42 
+43 .task {
+44     padding: 10px;
+45     border: 1px solid #ddd;
+46     margin-bottom: 10px;
+47     background-color: white;
+48 }
+49 
+50 .task.completed {
+51     text-decoration: line-through;
+52     background-color: #d4edda;
+53 }
+
+File: js/auth.js
+1 document.addEventListener('DOMContentLoaded', () => {
+2     const signupForm = document.getElementById('signup-form');
+3     const loginForm = document.getElementById('login-form');
+4     const logoutButton = document.getElementById('logout-button');
+5 
+6     if (signupForm) {
+7         signupForm.addEventListener('submit', async (e) => {
+8             e.preventDefault();
+9             const name = document.getElementById('name').value;
+10             const email = document.getElementById('email').value;
+11             const password = document.getElementById('password').value;
+12 
+13             const response = await fetch('http://localhost:3000/api/users/signup', {
+14                 method: 'POST',
+15                 headers: {
+16                     'Content-Type': 'application/json'
+17                 },
+18                 body: JSON.stringify({ name, email, password })
+19             });
+20 
+21             const data = await response.json();
+22             if (response.ok) {
+23                 alert('Signup successful! Please login.');
+24                 window.location.href = 'login.html';
+25             } else {
+26                 alert(data.message);
+27             }
+28         });
+29     }
+30 
+31     if (loginForm) {
+32         loginForm.addEventListener('submit', async (e) => {
+33             e.preventDefault();
+34             const email = document.getElementById('email').value;
+35             const password = document.getElementById('password').value;
+36 
+37             const response = await fetch('http://localhost:3000/api/users/login', {
+38                 method: 'POST',
+39                 headers: {
+40                     'Content-Type': 'application/json'
+41                 },
+42                 body: JSON.stringify({ email, password })
+43             });
+44 
+45             const data = await response.json();
+46             if (response.ok) {
+47                 localStorage.setItem('token', data.token);
+48                 window.location.href = 'dashboard.html';
+49             } else {
+50                 alert(data.message);
+51             }
+52         });
+53     }
+54 
+55     if (logoutButton) {
+56         logoutButton.addEventListener('click', () => {
+57             localStorage.removeItem('token');
+58             window.location.href = 'index.html';
+59         });
+60     }
+61 });
+
+File: js/tasks.js
+1 document.addEventListener('DOMContentLoaded', () => {
+2     const token = localStorage.getItem('token');
+3     if (!token) {
+4         window.location.href = 'login.html';
+5     }
+6 
+7     const addTaskForm = document.getElementById('add-task-form');
+8     const tasksContainer = document.getElementById('tasks-container');
+9 
+10     const fetchTasks = async () => {
+11         const response = await fetch('http://localhost:3000/api/tasks/view', {
+12             method: 'GET',
+13             headers: {
+14                 'Authorization': `Bearer ${token}`
+15             }
+16         });
+17 
+18         const tasks = await response.json();
+19         tasksContainer.innerHTML = '';
+20         tasks.forEach(task => {
+21             const taskElement = document.createElement('div');
+22             taskElement.className = `task ${task.status === 'Completed' ? 'completed' : ''}`;
+23             taskElement.innerHTML = `
+24                 <h3>${task.title}</h3>
+25                 <p>Due: ${task.due_date || 'No due date'}</p>
+26                 <p>Priority: ${task.priority}</p>
+27                 <button onclick="completeTask(${task.id})">Complete</button>
+28                 <button onclick="deleteTask(${task.id})">Delete</button>
+29             `;
+30             tasksContainer.appendChild(taskElement);
+31         });
+32     };
+33 
+34     if (addTaskForm) {
+35         addTaskForm.addEventListener('submit', async (e) => {
+36             e.preventDefault();
+37             const title = document.getElementById('title').value;
+38             const dueDate = document.getElementById('due-date').value;
+39             const priority = document.getElementById('priority').value;
+40 
+41             const response = await fetch('http://localhost:3000/api/tasks/add', {
+42                 method: 'POST',
+43                 headers: {
+44                     'Content-Type': 'application/json',
+45                     'Authorization': `Bearer ${token}`
+46                 },
+47                 body: JSON.stringify({ title, due_date: dueDate, priority })
+48             });
+49 
+50             if (response.ok) {
+51                 fetchTasks();
+52                 addTaskForm.reset();
+53             } else {
+54                 const data = await response.json();
+55                 alert(data.message);
+56             }
+57         });
+58     }
+59 
+60     window.completeTask = async (taskId) => {
+61         const response = await fetch('http://localhost:3000/api/tasks/completed', {
+62             method: 'PATCH',
+63             headers: {
+64                 'Content-Type': 'application/json',
+65                 'Authorization': `Bearer ${token}`
+66             },
+67             body: JSON.stringify({ id: taskId })
+68         });
+69 
+70         if (response.ok) {
+71             fetchTasks();
+72         } else {
+73             const data = await response.json();
+74             alert(data.message);
+75         }
+76     };
+77 
+78     window.deleteTask = async (taskId) => {
+79         const response = await fetch('http://localhost:3000/api/tasks/delete', {
+80             method: 'DELETE',
+81             headers: {
+82                 'Content-Type': 'application/json',
+83                 'Authorization': `Bearer ${token}`
+84             },
+85             body: JSON.stringify({ id: taskId })
+86         });
+87 
+88         if (response.ok) {
+89             fetchTasks();
+90         } else {
+91             const data = await response.json();
+92             alert(data.message);
+93         }
+94     };
+95 
+96     fetchTasks();
+97 });
+
+File: js/profile.js
+1 document.addEventListener('DOMContentLoaded', () => {
+2     const token = localStorage.getItem('token');
+3     if (!token) {
+4         window.location.href = 'login.html';
+5     }
+6 
+7     const profileForm = document.getElementById('profile-form');
+8 
+9     if (profileForm) {
+10         profileForm.addEventListener('submit', async (e) => {
+11             e.preventDefault();
+12             const name = document.getElementById('name').value;
+13             const email = document.getElementById('email').value;
+14             const password = document.getElementById('password').value;
+15 
+16             const response = await fetch('http://localhost:3000/api/users/profile', {
+17                 method: 'PUT',
+18                 headers: {
+19                     'Content-Type': 'application/json',
+20                     'Authorization': `Bearer ${token}`
+21                 },
+22                 body: JSON.stringify({ name, email, password })
+23             });
+24 
+25             const data = await response.json();
+26             if (response.ok) {
+27                 alert('Profile updated successfully!');
+28             } else {
+29                 alert(data.message);
+30             }
+31         });
+32     }
+33 });
+
+File: pages/index.html
+1 <!DOCTYPE html>
+2 <html lang="en">
+3 <head>
+4     <meta charset="UTF-8">
+5     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+6     <title>To-Do List</title>
+7     <link rel="stylesheet" href="../css/styles.css">
+8 </head>
+9 <body>
+10     <header>
+11         <h1>Welcome to To-Do List</h1>
+12     </header>
+13     <div class="container">
+14         <a href="signup.html">Sign Up</a>
+15         <a href="login.html">Login</a>
+16     </div>
+17 </body>
+18 </html>
+
+File: pages/signup.html
+1 <!DOCTYPE html>
+2 <html lang="en">
+3 <head>
+4     <meta charset="UTF-8">
+5     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+6     <title>Sign Up</title>
+7     <link rel="stylesheet" href="../css/styles.css">
+8 </head>
+9 <body>
+10     <header>
+11         <h1>Sign Up</h1>
+12     </header>
+13     <div class="container">
+14         <form id="signup-form">
+15             <input type="text" id="name" placeholder="Name" required>
+16             <input type="email" id="email" placeholder="Email" required>
+17             <input type="password" id="password" placeholder="Password" required>
+18             <button type="submit">Sign Up</button>
+19         </form>
+20         <a href="login.html">Already have an account? Login</a>
+21     </div>
+22     <script src="../js/auth.js"></script>
+23 </body>
+24 </html>
+
+File: pages/login.html
+1 <!DOCTYPE html>
+2 <html lang="en">
+3 <head>
+4     <meta charset="UTF-8">
+5     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+6     <title>Login</title>
+7     <link rel="stylesheet" href="../css/styles.css">
+8 </head>
+9 <body>
+10     <header>
+11         <h1>Login</h1>
+12     </header>
+13     <div class="container">
+14         <form id="login-form">
+15             <input type="email" id="email" placeholder="Email" required>
+16             <input type="password" id="password" placeholder="Password" required>
+17             <button type="submit">Login</button>
+18         </form>
+19         <a href="signup.html">Don't have an account? Sign Up</a>
+20     </div>
+21     <script src="../js/auth.js"></script>
+22 </body>
+23 </html>
+
+File: pages/dashboard.html
+1 <!DOCTYPE html>
+2 <html lang="en">
+3 <head>
+4     <meta charset="UTF-8">
+5     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+6     <title>Dashboard</title>
+7     <link rel="stylesheet" href="../css/styles.css">
+8 </head>
+9 <body>
+10     <header>
+11         <h1>Dashboard</h1>
+12         <button id="logout-button">Logout</button>
+13     </header>
+14     <div class="container">
+15         <form id="add-task-form">
+16             <input type="text" id="title" placeholder="Task Title" required>
+17             <input type="date" id="due-date">
+18             <select id="priority">
+19                 <option value="Low">Low</option>
+20                 <option value="Medium">Medium</option>
+21                 <option value="High">High</option>
+22             </select>
+23             <button type="submit">Add Task</button>
+24         </form>
+25         <div id="tasks-container"></div>
+26     </div>
+27     <script src="../js/auth.js"></script>
+28     <script src="../js/tasks.js"></script>
+29 </body>
+30 </html>
+
+File: pages/profile.html
+1 <!DOCTYPE html>
+2 <html lang="en">
+3 <head>
+4     <meta charset="UTF-8">
+5     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+6     <title>Profile</title>
+7     <link rel="stylesheet" href="../css/styles.css">
+8 </head>
+9 <body>
+10     <header>
+11         <h1>Profile</h1>
+12         <button id="logout-button">Logout</button>
+13     </header>
+14     <div class="container">
+15         <form id="profile-form">
+16             <input type="text" id="name" placeholder="Name" required>
+17             <input type="email" id="email" placeholder="Email" required>
+18             <input type="password" id="password" placeholder="Password" required>
+19             <button type="submit">Update Profile</button>
+20         </form>
+21     </div>
+22     <script src="../js/auth.js"></script>
+23     <script src="../js/profile.js"></script>
+24 </body>
+25 </html>
+
+```
+
+================================== Ai Message ==================================
+
+```sh
+#!/bin/bash
+
+# Navigate to the frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+
+# Run the frontend server
+npm start
+```

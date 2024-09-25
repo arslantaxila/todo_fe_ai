@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Dashboard</h1>
+        <button id="logout-button">Logout</button>
+    </header>
+    <div class="container">
+        <form id="add-task-form">
+            <input type="text" id="title" placeholder="Task Title" required>
+            <input type="date" id="due-date">
+            <select id="priority">
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+            </select>
+            <button type="submit">Add Task</button>
+        </form>
+        <div id="tasks-container"></div>
+    </div>
+    <script src="../js/auth.js"></script>
+    <script src="../js/tasks.js"></script>
+</body>
+</html>

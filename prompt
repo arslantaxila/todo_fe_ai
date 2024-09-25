@@ -1,0 +1,112 @@
+1. Project Overview
+The objective of this project is to develop a To-Do List application that allows users to create, manage, and organize their tasks efficiently. The system will include essential user authentication features like sign up, login, and logout, ensuring secure access to user-specific tasks. Each user will have their personalized to-do list, with options to add, edit, mark tasks as completed, and delete tasks.
+
+
+
+Technology Stack
+•	Frontend: HTML5, CSS3, JavaScript, Bootstrap
+
+
+2. Functional Requirements
+2.1 User Authentication
+2.1.1 Signup
+•	Description: Users must be able to register for an account using their email and password.
+•	Requirements:
+o	A registration form must be provided for users to input their details (e.g., name, email, password).
+o	Email must be unique for each user.
+o	Passwords must meet security criteria (minimum length, use of alphanumeric characters).
+o	Provide validation for all form fields (e.g., valid email format, non-empty fields).
+2.1.2 Login
+•	Description: Users must be able to log in with valid credentials.
+•	Requirements:
+o	A login form must be provided for users to enter their email and password.
+o	Passwords must be hashed before being stored in the database.
+o	Upon successful login, users should be redirected to their personal dashboard.
+o	Invalid credentials should result in appropriate error messages.
+
+2.1.3 Logout
+•	Description: Users should be able to log out of the application securely.
+•	Requirements:
+o	Users should have an option to log out.
+o	Session or JWT tokens should be invalidated on logout.
+2.2 Task Management
+2.2.1 Add Task
+•	Description: Users must be able to add tasks to their to-do list.
+•	Requirements:
+o	Users should see a form or input field where they can enter task details (e.g., task title, due date, priority).
+o	Tasks must be associated with the logged-in user.
+o	The system should allow optional fields for due date and priority level (e.g., High, Medium, Low).
+2.2.2 View Tasks
+•	Description: Users must be able to view all of their tasks in a structured manner.
+•	Requirements:
+o	Tasks should be displayed in a list or table format.
+o	Tasks can be filtered by status (e.g., pending, completed) or sorted by due date, priority, etc.
+o	Completed tasks should be visually distinguishable from pending tasks.
+2.2.3 Edit Task
+•	Description: Users must be able to edit existing tasks.
+•	Requirements:
+o	Users should have the option to modify the task title, due date, or priority level.
+o	Changes should be saved and reflected immediately.
+2.2.4 Mark Task as Completed
+•	Description: Users must be able to mark a task as completed.
+•	Requirements:
+o	Users should be able to click a button or checkbox to mark a task as completed.
+o	The task should visually update to indicate completion (e.g., strikethrough or moved to a "Completed" section).
+2.2.5 Delete Task
+•	Description: Users must be able to delete a task from their list.
+•	Requirements:
+o	Users should be able to remove tasks by clicking a "Delete" button.
+o	A confirmation dialog should appear before permanently deleting a task.
+2.3 User Profile Management
+2.3.1 Update Profile
+•	Description: Users must be able to update their personal information.
+•	Requirements:
+o	Users should be able to update their name, email, and password.
+o	The system should validate email format and check for uniqueness.
+
+
+Backend is already developed and deployed.
+
+Develop the frontend using following backend endpoints, and remember to develop separate pages for ease of usability and customization:
+
+Backend Endpoints:
+Auth/Users:
+http://localhost:3000/api/users/signup
+router.post('/signup', validateSignup, UserController.signup);
+http://localhost:3000/api/users/login
+router.post('/login', validateLogin, UserController.login);
+http://localhost:3000/api/users/profile
+router.put('/profile', authMiddleware, UserController.updateProfile);
+
+Tasks:
+http://localhost:3000/api/tasks/add
+router.post('/add', authMiddleware, TaskController.addTask);
+http://localhost:3000/api/tasks/view
+router.get('/view', authMiddleware, TaskController.viewTasks);
+http://localhost:3000/api/tasks/edit
+router.put('/edit', authMiddleware, TaskController.editTask);
+http://localhost:3000/api/tasks/completed
+router.patch('/completed', authMiddleware, TaskController.completeTask);
+http://localhost:3000/api/tasks/delete
+router.delete('/delete', authMiddleware, TaskController.deleteTask);
+
+
+Database Structure:
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE tasks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    due_date DATE,
+    priority ENUM('High', 'Medium', 'Low'),
+    status ENUM('Pending', 'Completed') DEFAULT 'Pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
